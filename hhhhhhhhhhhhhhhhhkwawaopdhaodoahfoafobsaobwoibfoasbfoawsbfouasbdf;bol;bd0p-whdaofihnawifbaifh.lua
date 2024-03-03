@@ -1,5 +1,3 @@
--- Assuming LaNoria UI library is imported and initialized as 'UI'
-
 local Config = {
     Box = false,
     BoxOutline = false,
@@ -27,6 +25,21 @@ local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local Camera = Workspace.CurrentCamera
 
+local function createDrawingObjects()
+    local drawingObjects = {
+        Box = Drawing.new("Square"),
+        BoxOutline = Drawing.new("Square"),
+        NameText = Drawing.new("Text"),
+        HealthBarBackground = Drawing.new("Square"),
+        HealthBar = Drawing.new("Square"),
+        HealthText = Drawing.new("Text"),
+        ToolText = Drawing.new("Text"),
+        DistanceText = Drawing.new("Text"),
+        Tracers = Drawing.new("Line"),
+    }
+    return drawingObjects
+end
+
 local function updateEsp(player, esp)
     local character = player and player.Character
     if character then
@@ -39,12 +52,16 @@ local function updateEsp(player, esp)
         local distance = localHumanoidRootPart and humanoidRootPart and (localHumanoidRootPart.Position - humanoidRootPart.Position).Magnitude or nil
 
         if not humanoidRootPart or not head or not humanoid or not distance then
-            esp.Visible = false
+            for _, drawing in pairs(esp) do
+                drawing.Visible = false
+            end
             return
         end
 
         if humanoid.Health <= 0 then
-            esp.Visible = false
+            for _, drawing in pairs(esp) do
+                drawing.Visible = false
+            end
             return
         end
 
@@ -57,12 +74,16 @@ local function updateEsp(player, esp)
             esp.Box.Color = Config.BoxColor
             esp.Box.Size = Vector2.new(width, height)
             esp.Box.Position = Vector2.new(Target2dPosition.X - esp.Box.Size.X / 2, Target2dPosition.Y - esp.Box.Size.Y / 2)
+            esp.Box.Thickness = 1
+            esp.Box.ZIndex = 69
 
             if Config.BoxOutline then
                 esp.BoxOutline.Visible = IsVisible
                 esp.BoxOutline.Color = Config.BoxOutlineColor
                 esp.BoxOutline.Size = Vector2.new(width, height)
                 esp.BoxOutline.Position = Vector2.new(Target2dPosition.X - esp.Box.Size.X / 2, Target2dPosition.Y - esp.Box.Size.Y / 2)
+                esp.BoxOutline.Thickness = 3
+                esp.BoxOutline.ZIndex = 1
             else
                 esp.BoxOutline.Visible = false
             end
@@ -72,10 +93,19 @@ local function updateEsp(player, esp)
         end
 
         if Config.NameText then
-            esp.NameText.Text = displayName
-            esp.NameText.Visible = IsVisible
-        else
-            esp.NameText.Visible = false
+            if IsVisible then
+                esp.NameText.Text = displayName
+                esp.NameText.Color = Config.NameTextColor
+                esp.NameText.Position = Vector2.new(Target2dPosition.X, Target2dPosition.Y + height / 2 + 5)
+                esp.NameText.Size = 18
+                esp.NameText.Center = true
+                esp.NameText.Outline = true
+                esp.NameText.OutlineColor = Color3.new(0, 0, 0)
+                esp.NameText.Visible = true
+                esp.NameText.ZIndex = 69
+            else
+                esp.NameText.Visible = false
+            end
         end
 
         if Config.HealthBar then
@@ -87,6 +117,8 @@ local function updateEsp(player, esp)
             esp.HealthBarBackground.Position = healthBarPosition
             esp.HealthBarBackground.Color = Color3.new(0, 0, 0)
             esp.HealthBarBackground.Visible = IsVisible
+            esp.HealthBarBackground.Thickness = 1
+            esp.HealthBarBackground.ZIndex = 68
             
             esp.HealthBar.Size = Vector2.new(healthBarWidth, healthBarHeight)
             esp.HealthBar.Position = healthBarPosition
@@ -104,30 +136,59 @@ local function updateEsp(player, esp)
                 esp.HealthBar.Color = Config.HealthBarColor
             end
             esp.HealthBar.Visible = IsVisible
+            esp.HealthBar.Thickness = 1
+            esp.HealthBar.ZIndex = 69
         end
 
         -- Draw health text
         if Config.HealthText then
-            esp.HealthText.Text = "" .. math.floor(humanoid.Health)
-            esp.HealthText.Visible = IsVisible
-        else
-            esp.HealthText.Visible = false
+            if IsVisible then
+                esp.HealthText.Text = "" .. math.floor(humanoid.Health)
+                esp.HealthText.Color = Config.HealthTextColor
+                esp.HealthText.Position = Vector2.new(Target2dPosition.X + width / 2, Target2dPosition.Y - height / 2 - 20)
+                esp.HealthText.Size = 18
+                esp.HealthText.Center = false
+                esp.HealthText.Outline = true
+                esp.HealthText.OutlineColor = Color3.new(0, 0, 0)
+                esp.HealthText.Visible = true
+                esp.HealthText.ZIndex = 69
+            else
+                esp.HealthText.Visible = false
+            end
         end
 
         -- Draw tool text
         if Config.ToolText then
-            esp.ToolText.Text = "" .. tostring(findtool(character))
-            esp.ToolText.Visible = IsVisible
-        else
-            esp.ToolText.Visible = false
+            if IsVisible then
+                esp.ToolText.Text = "" .. tostring(findtool(character))
+                esp.ToolText.Color = Config.ToolTextColor
+                esp.ToolText.Position = Vector2.new(Target2dPosition.X, Target2dPosition.Y + height / 2 + 20)
+                esp.ToolText.Size = 18
+                esp.ToolText.Center = true
+                esp.ToolText.Outline = true
+                esp.ToolText.OutlineColor = Color3.new(0, 0, 0)
+                esp.ToolText.Visible = true
+                esp.ToolText.ZIndex = 69
+            else
+                esp.ToolText.Visible = false
+            end
         end
 
         -- Draw distance text
         if Config.DistanceText then
-            esp.DistanceText.Text = "[" .. math.floor(distance) .. "s]"
-            esp.DistanceText.Visible = IsVisible
-        else
-            esp.DistanceText.Visible = false
+            if IsVisible then
+                esp.DistanceText.Text = "[" .. math.floor(distance) .. "s]"
+                esp.DistanceText.Color = Config.DistanceTextColor
+                esp.DistanceText.Position = Vector2.new(Target2dPosition.X, Target2dPosition.Y + height / 2 + 40)
+                esp.DistanceText.Size = 18
+                esp.DistanceText.Center = true
+                esp.DistanceText.Outline = true
+                esp.DistanceText.OutlineColor = Color3.new(0, 0, 0)
+                esp.DistanceText.Visible = true
+                esp.DistanceText.ZIndex = 69
+            else
+                esp.DistanceText.Visible = false
+            end
         end
 
         -- Draw tracers
@@ -138,24 +199,17 @@ local function updateEsp(player, esp)
             esp.Tracers.Color = Config.TracersColor
             esp.Tracers.Thickness = 1
             esp.Tracers.Transparency = 0.5
+            esp.Tracers.ZIndex = 69
         end
     else
-        esp.Visible = false
+        for _, drawing in pairs(esp) do
+            drawing.Visible = false
+        end
     end
 end
 
 function createEsp(player)
-    local esp = {
-        Box = UI.Create("Rectangle"),
-        BoxOutline = UI.Create("Rectangle"),
-        NameText = UI.Create("Text"),
-        HealthBarBackground = UI.Create("Rectangle"),
-        HealthBar = UI.Create("Rectangle"),
-        HealthText = UI.Create("Text"),
-        ToolText = UI.Create("Text"),
-        DistanceText = UI.Create("Text"),
-        Tracers = UI.Create("Line"),
-    }
+    local esp = createDrawingObjects()
 
     local Updater
     Updater = game:GetService("RunService").Heartbeat:Connect(function()
